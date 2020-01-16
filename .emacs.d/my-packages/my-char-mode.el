@@ -85,8 +85,7 @@
 
 (defhydra hydra-char (:idle 1.0
                       :columns 4
-                      :body-pre (evil-char-state)
-                      :post (evil-normal-state))
+                      :body-pre (evil-char-state))
   "Character mode"
   ("h" evil-backward-char "left")
   ("j" evil-next-line "down")
@@ -106,9 +105,8 @@
   ("~" my-toggle-case-char "toggle case")
   ("i" my-char-info "info" :exit t)
   ("?" my-char-info "info" :exit t)
-  ("<escape>" nil "exit" :exit t)
-  ("s-<return>" evil-insert-state "enter lower level" :exit t)
-  ("s-<escape>" hydra-word/body "escape to higher level" :exit t))
+  ("<return>" eem-enter-lower-level "enter lower level" :exit t)
+  ("<escape>" eem-enter-higher-level "escape to higher level" :exit t))
 
 (global-set-key (kbd "s-x") 'hydra-char/body)
 

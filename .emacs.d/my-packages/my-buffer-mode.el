@@ -81,11 +81,17 @@ current ('original') buffer."
   (interactive)
   (gethash "0" my-buffer-marks-hash))
 
+(defun my-search-buffers ()
+  "Search for buffer."
+  (interactive)
+  (return-to-original-buffer)
+  (ivy-switch-buffer))
+
 (defhydra hydra-buffer (:idle 1.0
                         :columns 3
                         :body-pre (progn (setup-buffer-marks-table)
                                          (evil-buffer-state))
-                        :post (evil-normal-state))
+                        :post (flash-to-original-and-back))
   "Buffer mode"
   ("b" list-buffers "show all")
   ("s-b" evil-switch-to-windows-last-buffer "switch to last" :exit t)
@@ -95,16 +101,15 @@ current ('original') buffer."
   ("m" my-buffer-set-mark "set mark")
   ("'" my-buffer-return-to-mark "return to mark")
   ("`" my-buffer-return-to-mark "return to mark")
-  ("s" ivy-switch-buffer "search" :exit t)
-  ("/" ivy-switch-buffer "search" :exit t)
+  ("s" my-search-buffers "search" :exit t)
+  ("/" my-search-buffers "search" :exit t)
   ("i" ibuffer "ibuffer" :exit t)
   ("s-i" ibuffer "ibuffer" :exit t)
   ("x" kill-buffer "delete")
   ("?" my-buffer-info "info" :exit t)
   ("q" return-to-original-buffer "return to original" :exit t)
-  ("<escape>" flash-to-original-and-back "exit" :exit t)
-  ("s-<return>" hydra-window/body "enter lower level" :exit t)
-  ("s-<escape>" hydra-application/body "escape to higher level" :exit t))
+  ("<return>" eem-enter-lower-level "enter lower level" :exit t)
+  ("<escape>" eem-enter-higher-level "escape to higher level" :exit t))
 
 ;; access the buffer menu via a "body" keybinding
 (global-set-key (kbd "s-b") 'hydra-buffer/body)

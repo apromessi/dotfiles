@@ -21,8 +21,7 @@ Version 2016-04-04"
 
 (defhydra hydra-file (:idle 1.0
                       :columns 2
-                      :body-pre (evil-file-state)
-                      :post (evil-normal-state))
+                      :body-pre (evil-file-state))
   "File mode"
   ("h" evil-backward-char "backward")
   ("j" evil-next-line "down")
@@ -32,8 +31,9 @@ Version 2016-04-04"
   ("L" evil-goto-line "end")
   ("C-h" xah-pop-local-mark-ring "previous mark")
   ("C-l" unpop-to-mark-command "next mark")
-  ("i" my-noop "exit" :exit t)
-  ("<escape>" my-noop "exit" :exit t))
+  ("i" nil "exit" :exit t)
+  ("<return>" eem-enter-lower-level "enter lower level" :exit t)
+  ("<escape>" eem-enter-higher-level "escape to higher level" :exit t))
 
 (global-set-key (kbd "s-f") 'hydra-file/body)
 

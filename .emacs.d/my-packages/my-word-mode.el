@@ -37,6 +37,11 @@
   (interactive)
   (apply 'evil-delete (evil-inner-word)))
 
+(defun my-change-word ()
+  "Change word"
+  (interactive)
+  (apply 'evil-change (evil-inner-word)))
+
 (defun my-toggle-case ()
   "Toggle case"
   (interactive)
@@ -106,23 +111,37 @@
       (goto-char (- word-end 1))
       (evil-paste-before nil nil))))
 
+(defun my-scroll-jump-words-backward ()
+  "Scroll jump back across words."
+  (interactive)
+  (evil-backward-WORD-begin 3))
+
+(defun my-scroll-jump-words-forward ()
+  "Scroll jump forward across words."
+  (interactive)
+  (evil-forward-WORD-begin 3))
+
 
 (defhydra hydra-word (:idle 1.0
                       :columns 2
-                      :body-pre (evil-word-state)
-                      :post (evil-normal-state))
+                      :body-pre (evil-word-state))
   "Word mode"
   ("h" evil-backward-WORD-begin "backward")
   ("j" evil-next-line "down")
   ("k" evil-previous-line "up")
   ("l" evil-forward-WORD-begin "forward")
-  ("H" my-rotate-chars-left-in-word "rotate chars left")
-  ("L" my-rotate-chars-right-in-word "rotate chars right")
-  ("C-h" my-move-word-backward "move left")
-  ("C-l" my-move-word-forward "move right")
-  ("C-j" my-move-word-down "move down")
-  ("C-k" my-move-word-up "move up")
+  ("C-h" my-scroll-jump-words-backward "backward")
+  ("C-j" my-scroll-jump-words-forward "down")
+  ("C-k" my-scroll-jump-words-backward "up")
+  ("C-l" my-scroll-jump-words-forward "forward")
+  ("C-S-h" my-rotate-chars-left-in-word "rotate chars left")
+  ("C-S-l" my-rotate-chars-right-in-word "rotate chars right")
+  ("H" my-move-word-backward "move left")
+  ("L" my-move-word-forward "move right")
+  ("J" my-move-word-down "move down")
+  ("K" my-move-word-up "move up")
   ("x" my-delete-word "delete")
+  ("c" my-change-word "" :exit t)
   ("~" my-toggle-case "toggle case")
   ("U" my-upper-case "upper case")
   ("u" my-lower-case "lower case")
@@ -131,9 +150,8 @@
   ("s-r" my-delete-word "delete" :exit t)
   ("s-o" my-delete-other-words "delete other words" :exit t)
   ("?" dictionary-lookup-definition "lookup in dictionary" :exit t)
-  ("<escape>" nil "exit" :exit t)
-  ("s-<return>" hydra-char/body "enter lower level" :exit t)
-  ("s-<escape>" hydra-line/body "escape to higher level" :exit t))
+  ("<return>" eem-enter-lower-level "enter lower level" :exit t)
+  ("<escape>" eem-enter-higher-level "escape to higher level" :exit t))
 
 (global-set-key (kbd "s-r") 'hydra-word/body)
 

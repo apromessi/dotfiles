@@ -19,6 +19,8 @@
   ("u" edebug-unset-breakpoint "Unset breakpoint")
   ("d" edebug-backtrace "Show program backtrace")
   ("e" edebug-eval-expression "Evaluate an expression")
+  ("E" edebug-visit-eval-list "Visit eval list")
+  ("v" edebug-update-eval-list "Update eval list (;-- to separate groups)")
   ("f" edebug-forward-sexp "Run for one expression (sets temporary breakpoint)")
   ("g" edebug-go-mode "Run until next breakpoint")
   ("G" edebug-Go-nonstop-mode "Go nonstop (interrupt with S)")
@@ -38,7 +40,7 @@
   ("w" edebug-where "return to current stop point")
   ("r" edebug-previous-result "show previous result")
   ("?" edebug-help "help")
-  ("q" nil "manual mode" :exit t)
+  ("q" nil "suspend menu" :exit t)
   ("<escape>" top-level "exit" :exit t))
 
 (global-set-key (kbd "s-q") 'hydra-debugger/body)

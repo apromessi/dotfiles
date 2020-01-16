@@ -21,10 +21,16 @@
 (use-package my-python
   :after general)
 
+(use-package my-ruby
+  :after general)
+
 (use-package my-elisp
   :after general)
 
 (use-package my-scheme
+  :after general)
+
+(use-package my-racket
   :after general)
 
 (use-package php-mode
@@ -57,6 +63,7 @@
 (use-package company
   :config
   ;; enable company mode autocompletion in all buffers
+  (setq company-idle-delay 0.2)
   (global-company-mode 1))
 
 (use-package company-jedi)
@@ -238,6 +245,16 @@
   (defface telephone-line-evil-system
     '((t (:background "light sky blue" :inherit telephone-line-evil)))
     "Face used in evil color-coded segments when in System state."
+    :group 'telephone-line-evil)
+
+  (defface telephone-line-evil-activity
+    '((t (:background "spring green" :inherit telephone-line-evil)))
+    "Face used in evil color-coded segments when in Activity state."
+    :group 'telephone-line-evil)
+
+  (defface telephone-line-evil-mode
+    '((t (:background "firebrick" :inherit telephone-line-evil)))
+    "Face used in evil color-coded segments when in Mode state."
     :group 'telephone-line-evil)
 
   (telephone-line-mode t))

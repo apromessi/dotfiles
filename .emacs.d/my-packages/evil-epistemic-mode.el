@@ -63,6 +63,12 @@
   :message "-- SYSTEM --"
   :enable (motion normal))
 
+(evil-define-state activity
+  "Activity state."
+  :tag " <A> "
+  :message "-- ACTIVITY --"
+  :enable (motion normal))
+
 (evil-define-state mode
   "Mode state."
   :tag " <M> "
@@ -79,51 +85,103 @@
 (require 'my-buffer-mode)
 (require 'my-system-mode)
 (require 'my-application-mode)
+(require 'my-activity-mode)
 
 ;; define face for use in epistemic mode
 (make-face 'eem-face)
 (set-face-font 'eem-face "-*-Consolas-normal-normal-normal-*-*-*-*-*-m-0-iso10646-1")
 (set-face-foreground 'eem-face "tomato")
 
-(setq eem-complete-tower (ht ('name "complete")
-                             ('levels (ht ('0 (ht ('name "insert")
-                                                  ('mode-entry 'evil-insert-state)))
-                                          ('1 (ht ('name "char")
-                                                  ('mode-entry 'hydra-char/body)))
-                                          ('2 (ht ('name "word")
-                                                  ('mode-entry 'hydra-word/body)))
-                                          ('3 (ht ('name "line")
-                                                  ('mode-entry 'hydra-line/body)))
-                                          ('4 (ht ('name "view")
-                                                  ('mode-entry 'hydra-view/body)))
-                                          ('5 (ht ('name "window")
-                                                  ('mode-entry 'hydra-window/body)))
-                                          ('6 (ht ('name "file")
-                                                  ('mode-entry 'hydra-file/body)))
-                                          ('7 (ht ('name "buffer")
-                                                  ('mode-entry 'hydra-buffer/body)))
-                                          ('8 (ht ('name "system")
-                                                  ('mode-entry 'hydra-system/body)))
-                                          ('9 (ht ('name "application")
-                                                  ('mode-entry 'hydra-application/body)))))))
+(setq eem-complete-tower
+      (ht ('name "complete")
+          ('levels (list (ht ('name "insert")
+                             ('mode-entry 'evil-insert-state))
+                         (ht ('name "char")
+                             ('mode-entry 'hydra-char/body))
+                         (ht ('name "word")
+                             ('mode-entry 'hydra-word/body))
+                         (ht ('name "line")
+                             ('mode-entry 'hydra-line/body))
+                         (ht ('name "activity")
+                             ('mode-entry 'hydra-activity/body))
+                         (ht ('name "normal")
+                             ('mode-entry 'evil-normal-state))
+                         (ht ('name "view")
+                             ('mode-entry 'hydra-view/body))
+                         (ht ('name "window")
+                             ('mode-entry 'hydra-window/body))
+                         (ht ('name "file")
+                             ('mode-entry 'hydra-file/body))
+                         (ht ('name "buffer")
+                             ('mode-entry 'hydra-buffer/body))
+                         (ht ('name "system")
+                             ('mode-entry 'hydra-system/body))
+                         (ht ('name "application")
+                             ('mode-entry 'hydra-application/body))))))
 
-(setq eem-vim-tower (ht ('name "vim")
-                        ('levels (ht ('0 (ht ('name "insert")
-                                             ('mode-entry 'evil-insert-state)))
-                                     ('1 (ht ('name "normal")
-                                             ('mode-entry 'evil-normal-state)))))))
+(setq eem-vim-tower
+      (ht ('name "vim")
+          ('levels (list (ht ('name "insert")
+                             ('mode-entry 'evil-insert-state))
+                         (ht ('name "normal")
+                             ('mode-entry 'evil-normal-state))))))
 
-(setq eem-emacs-tower (ht ('name "emacs")
-                          ('levels (ht ('0 (ht ('name "emacs")
-                                               ('mode-entry 'evil-emacs-state)))))))
+(setq eem-emacs-tower
+      (ht ('name "emacs")
+          ('levels (list (ht ('name "emacs")
+                             ('mode-entry 'evil-emacs-state))))))
 
-(setq eem-towers `(,eem-complete-tower ,eem-vim-tower ,eem-emacs-tower))
+(setq eem-lisp-tower
+      (ht ('name "lisp")
+          ('levels (list (ht ('name "insert")
+                             ('mode-entry 'evil-insert-state))
+                         (ht ('name "symex")
+                             ('mode-entry 'hydra-symex/body))
+                         (ht ('name "normal")
+                             ('mode-entry 'evil-normal-state))))))
+
+(setq eem-towers
+      (list eem-vim-tower
+            eem-complete-tower
+            eem-lisp-tower
+            eem-emacs-tower))
 
 ;; the prefix that will be used in naming all buffers used
 ;; in epistemic mode representations
 (setq eem-buffer-prefix "EPISTEMIC")
 
-(setq current-tower-index 0)
+(setq eem--current-tower-index 0)
+(setq eem--current-level 1)  ;; TODO: set via hook in all modes incl evil modes
+(setq eem--reference-buffer (current-buffer))
+(make-variable-buffer-local 'eem--current-tower-index)
+(make-variable-buffer-local 'eem--current-level)
+
+;; ideally, epistemic mode should be aware when any evil state is entered,
+;; if that state is in the present tower. For now, just handle the specific
+;; case of insert mode, since it's the one that's often entered using a
+;; non-eem entry point
+(add-function :after (symbol-function 'evil-insert-state)
+              (lambda (&rest args) (setq eem--current-level 0)))
+
+;;;; set tower to lisp tower in all lisp modes (emulating major mode -- TODO: improve)
+;; (defvar lisp-modes (list 'emacs-lisp-mode
+;;                          'scheme-mode
+;;                          'racket-mode))
+
+;; (dolist (mode lisp-modes)
+;;   (let ((hook (intern (concat (symbol-name mode)
+;;                               "-hook"))))
+;;     (add-hook hook (lambda (&rest)
+;;                      (setq eem--current-tower-index 2)
+;;                      (setq eem--current-level 2)))))
+
+(defun eem--get-reference-buffer ()
+  "Get the buffer in reference to which epistemic mode is operating."
+  (if (string-match (format "^%s"
+                             eem-buffer-prefix)
+                     (buffer-name))
+      eem--reference-buffer
+    (current-buffer)))
 
 (defun eem--tower (tower-id)
   "The epistemic tower corresponding to the provided index."
@@ -133,38 +191,35 @@
 (defun eem--current-tower ()
   "The epistemic editing tower we are currently in."
   (interactive)
-  (eem--tower current-tower-index))
+  (with-current-buffer (eem--get-reference-buffer)
+    (eem--tower eem--current-tower-index)))
 
 (defun eem-previous-tower ()
   "Previous tower"
   (interactive)
-  (let ((tower-id (mod (- current-tower-index
-                          1)
-                       (length eem-towers))))
-    (eem--switch-to-tower tower-id)))
+  (with-current-buffer (eem--get-reference-buffer)
+    (let ((tower-id (mod (- eem--current-tower-index
+                           1)
+                        (length eem-towers))))
+     (eem--switch-to-tower tower-id))))
 
 (defun eem-next-tower ()
   "Next tower"
   (interactive)
-  (let ((tower-id (mod (+ current-tower-index
-                          1)
-                       (length eem-towers))))
-    (eem--switch-to-tower tower-id)))
+  (with-current-buffer (eem--get-reference-buffer)
+    (let ((tower-id (mod (+ eem--current-tower-index
+                           1)
+                        (length eem-towers))))
+     (eem--switch-to-tower tower-id))))
 
 (defun eem--switch-to-tower (tower-id)
   "Switch to the tower indicated"
   (interactive)
   (let ((tower (eem--tower tower-id)))
     (switch-to-buffer (eem--buffer-name tower))
-    (setq current-tower-index tower-id)
+    (with-current-buffer (eem--get-reference-buffer)
+      (setq eem--current-tower-index tower-id))
     (eem--extract-selected-level)))
-
-(defun enter-first-level ()
-  "Enter epistemic modes at first level"
-  (interactive)
-  (evil-force-normal-state)
-  ;; start at the lowest level
-  (hydra-char/body))
 
 (defun eem--buffer-name (tower)
   "Buffer name to use for a given tower."
@@ -191,27 +246,32 @@
   (let ((tower-buffer (my-new-empty-buffer
                        (eem--buffer-name tower)))
         (tower-levels (ht-get tower 'levels)))
-    (with-current-buffer tower-buffer
-      (eem--set-buffer-appearance)
-      (dolist (level-number
-               (ht-keys tower-levels))
-        (let ((level (ht-get tower-levels
-                             level-number)))
-          (insert "|―――"
-                  (number-to-string level-number)
-                  "―――|"
-                  " " (ht-get level
-                              'name) "\n")))
-      (my-delete-line))
+    (let ((tower-height (length tower-levels)))
+      (with-current-buffer tower-buffer
+       (eem--set-buffer-appearance)
+       (dolist
+           (level-number (reverse
+                          (number-sequence 0 (- tower-height
+                                                1))))
+         (let ((level (nth level-number
+                           tower-levels)))
+           (insert "|―――"
+                   (number-to-string level-number)
+                   "―――|"
+                   " " (ht-get level
+                               'name) "\n")))
+       (my-delete-line)))
     tower-buffer))
 
 (defun my-enter-mode-mode ()
   "Enter a buffer containing a textual representation of the
 initial epistemic tower."
   (interactive)
+  (setq eem--reference-buffer (current-buffer))
   (dolist (tower eem-towers)
     (eem-render-tower tower))
-  (eem--switch-to-tower current-tower-index)
+  (with-current-buffer (eem--get-reference-buffer)
+    (eem--switch-to-tower eem--current-tower-index))
   (evil-mode-state))
 
 (defun my-exit-mode-mode ()
@@ -221,27 +281,55 @@ initial epistemic tower."
   (evil-normal-state)
   (kill-matching-buffers (concat "^" eem-buffer-prefix) nil t))
 
-;;(define-key evil-insert-state-map [s-escape] 'enter-first-level)
-;;(define-key evil-normal-state-map [s-escape] 'hydra-window/body)
-(define-key evil-normal-state-map [s-return] 'evil-insert-state)
+(define-key evil-insert-state-map [escape] 'eem-enter-higher-level)
+(define-key evil-normal-state-map [escape] 'eem-enter-higher-level)
+(define-key evil-normal-state-map [return] 'eem-enter-lower-level)
+(global-set-key (kbd "s-<escape>") 'evil-force-normal-state)
 
 (defun eem--enter-level (level-number)
   "Enter level LEVEL-NUMBER"
   (let* ((tower (eem--current-tower))
          (levels (ht-get tower 'levels))
-         (level (ht-get levels level-number)))
-    (funcall (ht-get level 'mode-entry))))
+         (tower-height (length levels))
+         (level-number (if (< level-number
+                              tower-height)
+                           level-number
+                         (- tower-height 1))))
+    (let ((level (nth level-number levels)))
+      (funcall (ht-get level 'mode-entry))
+      (setq eem--current-level level-number))))
 
-(defun eem-enter-level ()
+(defun eem-enter-selected-level ()
   "Enter selected level"
   (interactive)
   (eem--enter-level eem--selected-level))
 
+(defun enter-first-level ()
+  "Enter epistemic modes at first level"
+  (interactive)
+  (evil-force-normal-state)
+  ;; start at the lowest level
+  (eem--enter-level 1))
+
+(defun eem-enter-lower-level ()
+  "Enter lower level."
+  (interactive)
+  (eem--enter-level (- eem--current-level
+                       1)))
+
+(defun eem-enter-higher-level ()
+  "Enter higher level."
+  (interactive)
+  (eem--enter-level (+ eem--current-level
+                       1)))
+
 (defun eem--extract-selected-level ()
   "Extract the selected level from the current representation"
   (interactive)
-  (let* ((level-str (substring (thing-at-point 'line t) 0 5))
-         (level-number (string-to-number (substring level-str 4 5))))
+  (let* ((level-str (thing-at-point 'line t))
+         (level-number (string-to-number (progn (string-match "[[:digit:]]+"
+                                                              level-str)
+                                                (match-string 0 level-str)))))
     (setq eem--selected-level level-number)))
 
 (defun eem-select-previous-level ()
@@ -282,11 +370,11 @@ initial epistemic tower."
   ;; the mode mode, tower mode, and so on recursively makes more sense
   ;; if we assume that keyboard shortcuts are scarce. this gives us ways to use
   ;; a small number of keys in any arbitrary configuration
-  ("<return>" eem-enter-level :exit t)
+  ("<return>" eem-enter-selected-level :exit t)
   ("i" my-noop "exit" :exit t)
-  ("<escape>" nil "exit" :exit t)
-  ("s-<return>" hydra-view/body "enter lower level" :exit t)
-  ("s-<escape>" hydra-buffer/body "escape to higher level" :exit t))
+  ("<escape>" nil "exit" :exit t))
+  ;("s-<return>" eem-enter-lower-level "enter lower level" :exit t)
+  ;("s-<escape>" eem-enter-higher-level "escape to higher level" :exit t))
 
 (global-set-key (kbd "s-m") 'hydra-mode/body)
 

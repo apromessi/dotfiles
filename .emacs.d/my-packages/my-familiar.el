@@ -32,6 +32,18 @@
   'save-buffer)
 
 (define-key
+  ;; copy
+  (current-global-map)
+  (kbd "s-c")
+  'evil-yank)
+
+;; (define-key
+;;   ;; paste
+;;   (current-global-map)
+;;   (kbd "s-v")
+;;   'evil-paste-after)
+
+(define-key
   ;; new frame
   (current-global-map)
   (kbd "s-n")

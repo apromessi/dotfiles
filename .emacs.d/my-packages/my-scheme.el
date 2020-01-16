@@ -7,14 +7,24 @@
   (interactive)
   (geiser-doc-symbol-at-point))
 
+(defun my-scheme-eval-symex ()
+  "Eval symex"
+  (interactive)
+  (geiser-eval-last-sexp nil))
+
+(defun my-scheme-eval-region ()
+  "Eval region."
+  (interactive)
+  (geiser-eval-region (region-beginning) (region-end))
+  (deactivate-mark))
+
 (defun my-scheme-eval-exp-or-region ()
   "Eval region or last sexp"
   (interactive)
   (if mark-active
-      (progn (geiser-eval-region (region-beginning) (region-end))
-             (deactivate-mark)
+      (progn (my-scheme-eval-region)
              (message "Evaluated region."))
-    (geiser-eval-last-sexp nil)))
+    (my-scheme-eval-symex)))
 
 (defun my-scheme-eval (what)
   "Evaluate something"

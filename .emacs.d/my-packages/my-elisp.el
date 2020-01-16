@@ -1,23 +1,36 @@
-(defun my-describe-symbol ()
+(defvar elisp-modes (list 'lisp-interaction-mode
+                          'emacs-lisp-mode
+                          'inferior-emacs-lisp-mode))
+
+(defun my-elisp-describe-symbol ()
   "Describe symbol at point"
   (interactive)
   (describe-symbol (symbol-at-point)))
 
-(defun my-eval-exp-or-region ()
+(defun my-elisp-eval-symex ()
+  "Eval symex"
+  (interactive)
+  (eval-last-sexp nil))
+
+(defun my-elisp-eval-region ()
+  "Eval region."
+  (interactive)
+  (eval-region (region-beginning) (region-end))
+  (deactivate-mark))
+
+(defun my-elisp-eval-exp-or-region ()
   "Eval region or last sexp"
   (interactive)
   (if mark-active
-      (progn (eval-region (region-beginning) (region-end))
-             (deactivate-mark)
+      (progn (my-elisp-eval-region)
              (message "Evaluated region."))
-    (eval-last-sexp nil)))
+    (my-elisp-eval-symex)))
 
-
-(defun my-eval (what)
+(defun my-elisp-eval (what)
   "Evaluate something"
   (interactive "cwhat?")
-  (cond ((equal what ?e) (my-eval-exp-or-region))
-        ((equal what ?r) (my-eval-exp-or-region))
+  (cond ((equal what ?e) (my-elisp-eval-exp-or-region))
+        ((equal what ?r) (my-elisp-eval-exp-or-region))
         ((equal what ?f) (eval-defun nil))
         ((equal what ?d) (edebug-defun))
         (t nil)))
@@ -26,12 +39,12 @@
                        :columns 2
                        :exit t)
   "Elisp menu"
-  ("e" my-eval "Eval")
-  ("v" my-eval "Eval")
+  ("e" my-elisp-eval "Eval")
+  ("v" my-elisp-eval "Eval")
   ("d" edebug-defun "Eval fn for debug")
   ("g" evil-jump-to-tag "Go to definition")
-  ("i" my-describe-symbol "See documentation on this")
-  ("?" my-describe-symbol "See documentation on this")
+  ("i" my-elisp-describe-symbol "See documentation on this")
+  ("?" my-elisp-describe-symbol "See documentation on this")
   ("r" my-lisp-repl "Go to elisp REPL"))
 
 (defun register-elisp-leader ()
@@ -42,14 +55,10 @@
                       my-local-leader 'hydra-elisp/body))
 
 ;; register elisp leader in all elisp modes
-(add-hook 'emacs-lisp-mode-hook 'register-elisp-leader)
-(add-hook 'lisp-interaction-mode-hook 'register-elisp-leader)
-
-(define-key
-  ;; handy navigation to jump up the file
-  evil-motion-state-map
-  (kbd "C-s-k")
-  'my-jump-up)
+(dolist (mode-name elisp-modes)
+  (setq mode-hook (intern (concat (symbol-name mode-name)
+                                  "-hook")))
+  (add-hook mode-hook 'register-elisp-leader))
 
 (use-package my-elisp-debugger)
 
